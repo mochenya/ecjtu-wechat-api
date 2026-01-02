@@ -1,5 +1,5 @@
 import pytest
-from ecjtu_wechat_api.services.parser import parse_course_schedule
+from ecjtu_wechat_api.services.parse_course import parse_course_schedule
 from ecjtu_wechat_api.models.course import CourseSchedule
 
 SAMPLE_HTML = """

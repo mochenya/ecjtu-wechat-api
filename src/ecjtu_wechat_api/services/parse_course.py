@@ -28,7 +28,11 @@ def fetch_course_schedule(weiXinID: str, date: str) -> tuple[int, str | None]:
         tuple[int, str | None]: 包含 HTTP 状态码和原始 HTML 文本的元组。
             如果发生网络异常，状态码将是异常中的 code 或 500。
     """
-    url = f"https://jwxt.ecjtu.edu.cn/weixin/CalendarServlet?weiXinID={weiXinID}&date={date}"
+    url = "https://jwxt.ecjtu.edu.cn/weixin/CalendarServlet"
+    params = {
+        "weiXinID": weiXinID,
+        "date": date,
+    }
 
     headers = {
         # 详尽的 User-Agent，包含微信版本、系统内核、设备型号等，
@@ -39,7 +43,7 @@ def fetch_course_schedule(weiXinID: str, date: str) -> tuple[int, str | None]:
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.encoding = "utf-8"
         return response.status_code, response.text
     except requests.RequestException as e:

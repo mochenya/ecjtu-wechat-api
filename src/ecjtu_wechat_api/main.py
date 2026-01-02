@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from ecjtu_wechat_api.api.routes import courses_router
+from ecjtu_wechat_api.api.routes import courses_router, scores_router
 
 app = FastAPI(
     title="华东交通大学教务系统微信版 API",
@@ -10,6 +10,7 @@ app = FastAPI(
 
 # 注册 API 路由
 app.include_router(courses_router)
+app.include_router(scores_router)
 
 
 @app.get(
@@ -23,8 +24,8 @@ async def root():
         "status": "online",
         "message": (
             "欢迎使用华东交通大学教务系统微信版 API。服务目前运行正常。"
-            "您可以通过 /courses/daily 路径，配合 weiXinID (教务绑定) "
-            "和 date (日期) 参数来获取指定的课程表数据。"
+            "您可以通过 /courses/daily 路径获取课程表，"
+            "或者通过 /scores/info 路径获取成绩数据。"
         ),
         "docs": "/docs",
     }

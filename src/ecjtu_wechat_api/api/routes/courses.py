@@ -3,7 +3,7 @@ from datetime import date as date_type
 from fastapi import APIRouter, HTTPException, Query
 
 from ecjtu_wechat_api.models.course import CourseSchedule
-from ecjtu_wechat_api.services.parser import (
+from ecjtu_wechat_api.services.parse_course import (
     fetch_course_schedule,
     parse_course_schedule,
 )
