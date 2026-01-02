@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from ecjtu_wechat_api.api.routes import courses_router, scores_router
+from ecjtu_wechat_api import courses_router, scores_router
 
 app = FastAPI(
     title="华东交通大学教务系统微信版 API",
