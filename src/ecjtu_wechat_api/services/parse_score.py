@@ -53,7 +53,9 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
     try:
         soup = BeautifulSoup(html_content, "html.parser")
 
-        # 1. 解析姓名和当前学期
+        # 1. 提取学生姓名和当前查询学期
+        # 原始片段:
+        # <div class="right">姓名:<span>张三</span><br />学期:<span>2025.1</span></div>
         right_div = soup.find("div", class_="right")
         student_name = ""
         current_term = ""
@@ -63,7 +65,8 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
                 student_name = spans[0].get_text(strip=True)
                 current_term = spans[1].get_text(strip=True)
 
-        # 2. 解析可查学期列表
+        # 2. 提取下拉菜单中的可选学期列表
+        # 原始片段: <li><a href="/ScoreQuery?term=2025.2">2025.2</a></li>
         available_terms = []
         term_ul = soup.find("ul", class_="dropdown-menu")
         if term_ul:
@@ -74,48 +77,56 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
                         TermItem(name=a.get_text(strip=True), url=a.get("href", ""))
                     )
 
-        # 3. 解析成绩数量
+        # 3. 提取成绩汇总数量
+        # 原始片段: <div class="words">共有<strong>3</strong>门考试成绩。</div>
         score_count = 0
         words_div = soup.find("div", class_="words")
         if words_div and (strong := words_div.find("strong")):
             with suppress(ValueError):
                 score_count = int(strong.get_text(strip=True))
 
-        # 4. 解析具体成绩
+        # 4. 遍历并提取具体课程成绩 (<div class="row">)
+        # 原始片段:
+        # <div class="row"><div class="text">
+        #     <span class="course">【主修】【1500190200】军事技能(学分:1.0)</span>
+        #     <div class="grade">期末成绩:<span class="score">合格</span>...</div>
+        # </div></div>
         scores = []
         for row in soup.find_all("div", class_="row"):
             text_div = row.find("div", class_="text")
             if not text_div:
                 continue
 
+            # 4.1 提取原始课程信息文本
+            # 格式示例: "【主修】【1500190200】军事技能(学分:1.0)"
             course_span = text_div.find("span", class_="course")
             if not course_span:
                 continue
 
             raw_course_text = course_span.get_text(strip=True)
-            # 格式示例：【主修】【1500190211】专业创新创业实践Ⅰ(学分:0.5)
-            # 提取括号中的学分
+            # 提取学分 (如: 1.0)
             credit = 0.0
             credit_match = re.search(r"\(学分:([\d.]+)\)", raw_course_text)
             if credit_match:
                 with suppress(ValueError):
                     credit = float(credit_match.group(1))
 
-            # 提取课程名称和代码
-            # 模式解释：匹配【类型】【代码】名称
+            # 使用正则解析课程修读类型、代码和名称
+            # 模式解释: 匹配 【类型】【代码】名称
             name_match = re.search(r"【(.*?)】【(.*?)】(.*?)(?:\(|$)", raw_course_text)
             major = name_match.group(1) if name_match else None
             course_code = name_match.group(2) if name_match else None
             course_name = name_match.group(3).strip() if name_match else raw_course_text
 
-            # 提取成绩
+            # 4.2 提取各项具体成绩
+            # 原始片段: 期末成绩:<span class="score">85</span>...
             grade_div = text_div.find("div", class_="grade")
             final_score = ""
             reexam_score = None
             retake_score = None
             if grade_div:
                 score_spans = grade_div.find_all("span", class_="score")
-                # 通常顺序是：期末，重考，重修
+                # 页面通常按顺序排列: 0:期末, 1:重考, 2:重修
                 if len(score_spans) >= 1:
                     final_score = score_spans[0].get_text(strip=True)
                 if len(score_spans) >= 2:
@@ -123,7 +134,9 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
                 if len(score_spans) >= 3:
                     retake_score = score_spans[2].get_text(strip=True) or None
 
-            # 提取课程类型 (必修/选修)
+            # 4.3 提取课程性质 (如: 必修课, 选修课)
+            # 原始片段:
+            # <div class="type"><span class="require"><mark>必修课</mark></span></div>
             course_type = ""
             type_div = row.find("div", class_="type")
             if type_div and (mark := type_div.find("mark")):

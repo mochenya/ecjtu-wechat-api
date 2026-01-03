@@ -51,18 +51,21 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
     try:
         soup = BeautifulSoup(html_content, "html.parser")
 
-        # 1. 解析日期和周次信息
+        # 1. 提取日期和周次信息
+        # 原始片段: <div class="center"><p>2026-01-05 星期一（第19周）</p></div>
         date_div = soup.find("div", class_="center")
         date_info = {"date": None, "day_of_week": None, "week_info": None}
 
         if date_div and (p_tag := date_div.find("p")):
             raw_date_str = p_tag.get_text(strip=True)
+            # 拆分日期 (2026-01-05) 和后续部分 (星期一（第19周）)
             parts = raw_date_str.split(" ", 1)
             if len(parts) >= 1:
                 date_info["date"] = parts[0]
 
             if len(parts) >= 2:
                 rest = parts[1]
+                # 使用正则匹配星期和周次，支持 "星期一（第19周）" 或 "星期一(19)"
                 match = re.search(r"([^（(]+)[（(]第?(\d+)周[）)]", rest)
                 if match:
                     date_info["day_of_week"] = match.group(1).strip()
@@ -70,7 +73,15 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
                 else:
                     date_info["day_of_week"] = rest.strip()
 
-        # 2. 解析具体的课程列表
+        # 2. 遍历课程列表容器 (<div class="calendar"><ul class="rl_info">)
+        # 原始 HTML 片段示例:
+        # <li><p>
+        #     <span class="class_span">3-4节<br /> </span>
+        #     大学英语Ⅰ(考试)<br />
+        #     时间：19 3,4<br />
+        #     地点：进贤2-212<br />
+        #     教师：<br />
+        # </p></li>
         courses = []
         calendar_div = soup.find("div", class_="calendar")
         if calendar_div and (ul_list := calendar_div.find("ul", class_="rl_info")):
@@ -91,19 +102,24 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
                 def clean_val(line):
                     return line.replace("：", ":").split(":", 1)[-1].strip()
 
+                # 获取所有文本行并清理空白
                 lines = [line.strip() for line in item.stripped_strings if line.strip()]
+                # 提取节次快捷标签 (如: "3-4节")
                 period_span = p.find("span", class_="class_span")
                 period_label = period_span.get_text(strip=True) if period_span else ""
                 lines = [line for line in lines if line != period_label]
 
                 found_name = False
                 for line in lines:
+                    # 2.1 提取时间并解析周次和节次
+                    # 原始行示例: "时间：19 3,4" (表示第19周，第3,4节)
                     if line.startswith(("时间", "时间:")):
                         time_val = clean_val(line)
                         course_info["time"] = time_val
                         try:
                             t_parts = time_val.split(" ")
                             if len(t_parts) == 2:
+                                # 解析周次范围，支持 "1-18" (Range) 或 "1,3,5" (List)
                                 weeks_part = t_parts[0].replace("，", ",")
                                 for w_range in weeks_part.split(","):
                                     if "-" in w_range:
@@ -114,6 +130,7 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
                                     elif w_range.strip():
                                         course_info["weeks"].append([int(w_range)])
 
+                                # 解析具体节次 (如: "3,4")
                                 periods_part = t_parts[1].replace("，", ",")
                                 course_info["periods"] = [
                                     int(p_p)
@@ -122,10 +139,14 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
                                 ]
                         except (ValueError, IndexError):
                             pass
+                    # 2.2 提取地点 (原始行示例: "地点：进贤2-212")
                     elif line.startswith(("地点", "地点:")):
                         course_info["location"] = clean_val(line)
+                    # 2.3 提取教师 (原始行示例: "教师：张三")
                     elif line.startswith(("教师", "教师:")):
                         course_info["teacher"] = clean_val(line)
+                    # 2.4 提取课程名称和考核状态
+                    # 原始行示例: "大学英语Ⅰ(考试)"
                     elif not found_name:
                         match = re.search(r"(.+?)[（(]([^（()）]+)[)）]$", line)
                         if match:
