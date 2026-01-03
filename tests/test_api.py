@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from ecjtu_wechat_api.main import app
 
 client = TestClient(app)

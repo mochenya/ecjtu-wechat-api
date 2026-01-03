@@ -1,6 +1,8 @@
 import json
 from typing import Any
+
 from pydantic import BaseModel
+
 from ecjtu_wechat_api.core.config import settings
 from ecjtu_wechat_api.utils.logger import logger
 

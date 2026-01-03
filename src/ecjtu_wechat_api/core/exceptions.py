@@ -20,4 +20,5 @@ class EducationSystemError(ECJTUAPIError):
 
 class ParseError(ECJTUAPIError):
     """HTML 解析错误"""
+
     pass

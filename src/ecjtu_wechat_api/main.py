@@ -21,11 +21,7 @@ async def api_error_handler(request: Request, exc: ECJTUAPIError):
     logger.error(f"业务异常: {exc.message}, 详情: {exc.details}")
     return JSONResponse(
         status_code=status_code,
-        content={
-            "status": "error",
-            "message": exc.message,
-            "details": exc.details
-        },
+        content={"status": "error", "message": exc.message, "details": exc.details},
     )
 
 
@@ -40,7 +36,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={
             "status": "error",
             "message": "服务器内部错误，请稍后再试",
-            "details": str(exc) if not isinstance(exc, RuntimeError) else None
+            "details": str(exc) if not isinstance(exc, RuntimeError) else None,
         },
     )
 

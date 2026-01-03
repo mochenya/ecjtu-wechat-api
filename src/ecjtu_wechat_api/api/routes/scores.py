@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 from ecjtu_wechat_api.models.score import StudentScoreInfo
 from ecjtu_wechat_api.services.parse_score import (

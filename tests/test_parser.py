@@ -1,7 +1,8 @@
 import pytest
-from ecjtu_wechat_api.services.parse_course import parse_course_schedule
-from ecjtu_wechat_api.models.course import CourseSchedule
+
 from ecjtu_wechat_api.core.exceptions import ParseError
+from ecjtu_wechat_api.models.course import CourseSchedule
+from ecjtu_wechat_api.services.parse_course import parse_course_schedule
 
 SAMPLE_HTML = """
 <!DOCTYPE html>

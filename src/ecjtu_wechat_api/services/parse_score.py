@@ -151,7 +151,7 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
         )
     except Exception as e:
         logger.error(f"解析成绩 HTML 出错: {e}")
-        raise ParseError(f"成绩解析失败: {str(e)}")
+        raise ParseError(f"成绩解析失败: {str(e)}") from e
 
 
 if __name__ == "__main__":
@@ -176,4 +176,3 @@ if __name__ == "__main__":
             logger.error(f"运行失败: {e}")
 
     asyncio.run(main())
-

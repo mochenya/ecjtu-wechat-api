@@ -144,7 +144,7 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
         )
     except Exception as e:
         logger.error(f"解析课程表 HTML 出错: {e}")
-        raise ParseError(f"课程表解析失败: {str(e)}")
+        raise ParseError(f"课程表解析失败: {str(e)}") from e
 
 
 if __name__ == "__main__":
@@ -164,4 +164,3 @@ if __name__ == "__main__":
             logger.error(f"运行失败: {e}")
 
     asyncio.run(main())
-

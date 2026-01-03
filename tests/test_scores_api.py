@@ -1,9 +1,9 @@
-from unittest.mock import patch, AsyncMock
-import pytest
+from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
 
-from ecjtu_wechat_api.main import app
 from ecjtu_wechat_api.core.exceptions import EducationSystemError, ParseError
+from ecjtu_wechat_api.main import app
 
 client = TestClient(app)
 
