@@ -1,8 +1,8 @@
 from ecjtu_wechat_api.api import courses_router, scores_router
 from ecjtu_wechat_api.services import (
     fetch_course_schedule,
-    parse_course_schedule,
     fetch_score_info,
+    parse_course_schedule,
     parse_score_info,
 )
 
