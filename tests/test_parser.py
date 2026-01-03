@@ -1,6 +1,7 @@
 import pytest
 from ecjtu_wechat_api.services.parse_course import parse_course_schedule
 from ecjtu_wechat_api.models.course import CourseSchedule
+from ecjtu_wechat_api.core.exceptions import ParseError
 
 SAMPLE_HTML = """
 <!DOCTYPE html>
@@ -75,5 +76,7 @@ def test_parse_course_schedule():
 
 
 def test_parse_empty_html():
-    assert parse_course_schedule("") is None
-    assert parse_course_schedule(None) is None
+    with pytest.raises(ParseError):
+        parse_course_schedule("")
+    with pytest.raises(ParseError):
+        parse_course_schedule(None)

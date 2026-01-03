@@ -1,12 +1,49 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 from ecjtu_wechat_api import courses_router, scores_router
+from ecjtu_wechat_api.core.exceptions import ECJTUAPIError
+from ecjtu_wechat_api.utils.logger import logger
 
 app = FastAPI(
     title="华东交通大学教务系统微信版 API",
     description="提供华东交通大学教务系统的课程表查询与解析服务，支持获取每日课程安排及结构化数据。",
     version="1.0.0",
 )
+
+
+@app.exception_handler(ECJTUAPIError)
+async def api_error_handler(request: Request, exc: ECJTUAPIError):
+    """
+    统一处理项目自定义业务异常
+    """
+    status_code = getattr(exc, "status_code", 400)
+    logger.error(f"业务异常: {exc.message}, 详情: {exc.details}")
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "error",
+            "message": exc.message,
+            "details": exc.details
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    处理未捕获的系统异常
+    """
+    logger.exception(f"未捕获的系统异常: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": "服务器内部错误，请稍后再试",
+            "details": str(exc) if not isinstance(exc, RuntimeError) else None
+        },
+    )
+
 
 # 注册 API 路由
 app.include_router(courses_router)

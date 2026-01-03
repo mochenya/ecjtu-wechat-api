@@ -33,22 +33,10 @@ async def get_score_info(
     2. 解析 HTML 并映射到 StudentScoreInfo 结构化模型。
     3. 返回 JSON 格式的解析结果。
     """
-    # 第一步：获取原始 HTML
-    status_code, html_content = fetch_score_info(weiXinID, term)
-    if status_code != 200 or not html_content:
-        raise HTTPException(
-            status_code=status_code if status_code != 200 else 500,
-            detail=(
-                f"网络请求失败：教务系统返回状态码 {status_code}，无法获取成绩源码。"
-            ),
-        )
+    # 获取原始 HTML
+    html_content = await fetch_score_info(weiXinID, term)
 
-    # 第二步：解析并构造 Pydantic 模型
+    # 解析并构造 Pydantic 模型
     parsed_data = parse_score_info(html_content)
-    if not parsed_data:
-        raise HTTPException(
-            status_code=500,
-            detail="数据解析失败：无法从返回的 HTML 中提取有效的成绩信息。",
-        )
 
     return parsed_data

@@ -41,6 +41,10 @@ class Config:
         "Accept-Language": "zh-CN,zh;q=0.9",
     }
 
+    # 教务系统相关接口地址
+    SCORE_URL = "https://jwxt.ecjtu.edu.cn/weixin/ScoreQuery"
+    COURSE_URL = "https://jwxt.ecjtu.edu.cn/weixin/CalendarServlet"
+
 
 # 全局单例配置对象
 settings = Config()
