@@ -25,6 +25,22 @@ class Config:
     # 调试运用数据存储目录，用于保存抓取的原始 HTML 和解析后的 JSON。
     DATA_DIR = PROJECT_ROOT / "data"
 
+    # 微信移动端 User-Agent（模拟安卓设备上的微信内置浏览器）
+    WECHAT_USER_AGENT = (
+        "Mozilla/5.0 (Linux; Android 16; 24129PN74C Build/BP2A.250605.031.A3; wv) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 "
+        "Mobile Safari/537.36 XWEB/1160117 MMWEBSDK/20250904 MMWEBID/1666 "
+        "MicroMessenger/8.0.65.2942(0x28004142) WeChat/arm64 Weixin GPVersion/1 "
+        "NetType/5G Language/zh_CN ABI/arm64"
+    )
+
+    # 标准请求头（用于模拟微信环境绕过教务系统检测）
+    DEFAULT_HEADERS = {
+        "User-Agent": WECHAT_USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+    }
+
 
 # 全局单例配置对象
 settings = Config()

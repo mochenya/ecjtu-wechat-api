@@ -34,13 +34,7 @@ def fetch_course_schedule(weiXinID: str, date: str) -> tuple[int, str | None]:
         "date": date,
     }
 
-    headers = {
-        # 详尽的 User-Agent，包含微信版本、系统内核、设备型号等，
-        # 确保请求模拟真实移动端环境
-        "User-Agent": "Mozilla/5.0 (Linux; Android 16; 24129PN74C Build/BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/116.0.0.0 Mobile Safari/537.36 XWEB/1160117 MMWEBSDK/20250904 MMWEBID/1666 MicroMessenger/8.0.65.2942(0x28004142) WeChat/arm64 Weixin GPVersion/1 NetType/4G Language/zh_CN ABI/arm64",  # noqa: E501
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9",
-    }
+    headers = settings.DEFAULT_HEADERS
 
     try:
         response = requests.get(url, params=params, headers=headers, timeout=10)
