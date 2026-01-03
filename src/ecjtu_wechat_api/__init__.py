@@ -1,3 +1,5 @@
+__version__ = "1.0.0"
+
 from ecjtu_wechat_api.api import courses_router, scores_router
 from ecjtu_wechat_api.services import (
     fetch_course_schedule,
