@@ -1,4 +1,6 @@
 __version__ = "1.0.0"
+__author__ = "mochenyaa"
+__copyright__ = "Copyright (c) 2026 mochenyaa"
 
 from ecjtu_wechat_api.api import courses_router, scores_router
 from ecjtu_wechat_api.services import (
