@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ecjtu_wechat_api import courses_router, exams_router, scores_router
+from ecjtu_wechat_api import courses_router, exams_router, scores_router, __version__
 from ecjtu_wechat_api.core.exceptions import ECJTUAPIError
 from ecjtu_wechat_api.utils.logger import logger
 
 app = FastAPI(
     title="华东交通大学教务系统微信版 API",
     description="提供华东交通大学教务系统的课程表查询、成绩获取与考试安排服务，支持结构化数据。",
-    version="1.1.0",
+    version=__version__,
 )
 
 
