@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ecjtu_wechat_api import courses_router, scores_router
+from ecjtu_wechat_api import courses_router, exams_router, scores_router
 from ecjtu_wechat_api.core.exceptions import ECJTUAPIError
 from ecjtu_wechat_api.utils.logger import logger
 
 app = FastAPI(
     title="华东交通大学教务系统微信版 API",
-    description="提供华东交通大学教务系统的课程表查询与解析服务，支持获取每日课程安排及结构化数据。",
-    version="1.0.0",
+    description="提供华东交通大学教务系统的课程表查询、成绩获取与考试安排服务，支持结构化数据。",
+    version="1.1.0",
 )
 
 
@@ -44,6 +44,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # 注册 API 路由
 app.include_router(courses_router)
 app.include_router(scores_router)
+app.include_router(exams_router)
 
 
 @app.get(
@@ -58,7 +59,8 @@ async def root():
         "message": (
             "欢迎使用华东交通大学教务系统微信版 API。服务目前运行正常。"
             "您可以通过 /courses/daily 路径获取课程表，"
-            "或者通过 /scores/info 路径获取成绩数据。"
+            "通过 /scores/info 路径获取成绩数据，"
+            "通过 /exams/schedule 路径获取考试安排。"
         ),
         "docs": "/docs",
     }

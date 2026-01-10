@@ -3,6 +3,11 @@ from ecjtu_wechat_api.models.course import (
     CourseSchedule,
     DateInfo,
 )
+from ecjtu_wechat_api.models.exam import (
+    ExamItem,
+    ExamSchedule,
+    ExamTermItem,
+)
 from ecjtu_wechat_api.models.score import (
     ScoreItem,
     StudentScoreInfo,
@@ -16,4 +21,7 @@ __all__ = [
     "Course",
     "CourseSchedule",
     "DateInfo",
+    "ExamItem",
+    "ExamSchedule",
+    "ExamTermItem",
 ]
