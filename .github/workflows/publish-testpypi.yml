@@ -28,11 +28,14 @@ jobs:
       - name: 🔢 计算开发版本号
         id: version
         run: |
-          HASH=$(git rev-parse --short HEAD)
-          # 提取基础版本并移除已有的 +local 部分
-          BASE_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d '"' | sed 's/+.*//')
-          NEW_VERSION="${BASE_VERSION}.dev+${HASH}"
+          DEV_SUFFIX="dev0.${HASH}"
           
+          # 读取 pyproject.toml 中的原始版本号
+          BASE_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d '"' | sed 's/[.+].*//')
+          
+          # 最终版本号
+          NEW_VERSION="${BASE_VERSION}.dev${DEV_SUFFIX}"
+
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
           echo "📦 开发版本号: ${NEW_VERSION}"
 
