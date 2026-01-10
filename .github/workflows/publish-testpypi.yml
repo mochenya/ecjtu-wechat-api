@@ -32,19 +32,19 @@ jobs:
           RAW_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d '"' || echo "")
 
           # 去掉任何 +local / .dev / .post 后缀，只保留主版本部分
-          BASE_VERSION=$(echo "$RAW_VERSION" | sed 's/[+.+].*//' | sed 's/\.dev.*$//' | sed 's/\.post.*$//' | sed 's/\.a[0-9]*$//' | sed 's/\.b[0-9]*$//' | sed 's/\.rc[0-9]*$//')
+          BASE_VERSION=$(echo "$RAW_VERSION" | sed 's/+.*//' | sed 's/\.dev.*$//' | sed 's/\.post.*$//' | sed 's/\.a[0-9]*$//' | sed 's/\.b[0-9]*$//' | sed 's/\.rc[0-9]*$//')
 
           # 检查是否为空或明显不合法
           if [ -z "$BASE_VERSION" ]; then
-            echo "错误：无法从 pyproject.toml 中读取有效的 version"
-            echo "当前读取到的原始内容：'$RAW_VERSION'"
+            echo "❌ 错误：无法从 pyproject.toml 中读取有效的 version"
+            echo "   当前读取到的原始内容：'$RAW_VERSION'"
             exit 1
           fi
 
           # 简单检查：至少要有 x.y.z 这种形式（最宽松检查）
           if ! echo "$BASE_VERSION" | grep -qE '^[0-9]+(\.[0-9]+){1,2}$'; then
-            echo "错误：解析出的基础版本 '$BASE_VERSION' 格式不合法"
-            echo "必须是类似 0.1.0 / 1.2.3 / 2.0 这样的格式"
+            echo "❌ 错误：解析出的基础版本 '$BASE_VERSION' 格式不合法"
+            echo "   必须是类似 0.1.0 / 1.2.3 / 2.0 这样的格式"
             exit 1
           fi
 
@@ -52,7 +52,10 @@ jobs:
           NEW_VERSION="${BASE_VERSION}.dev${{ github.run_number }}"
 
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "📦 开发版本号: ${NEW_VERSION}"
+          echo "📋 原始版本号: $RAW_VERSION"
+          echo "📦 基础版本号: $BASE_VERSION"
+          echo "🔢 Run Number: ${{ github.run_number }}"
+          echo "✨ 最终版本号: $NEW_VERSION"
 
       - name: ✏️ 更新版本号
         run: |
