@@ -1,0 +1,51 @@
+name: 🧪 发布 dev 版到 TestPyPI
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  publish-testpypi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 检出完整历史代码
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: 🔄 同步项目依赖
+        run: uv sync
+
+      - name: 🔢 计算开发版本号
+        id: version
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          # 提取基础版本并移除已有的 +local 部分
+          BASE_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/' | tr -d '"' | sed 's/+.*//')
+          NEW_VERSION="${BASE_VERSION}.dev+${HASH}"
+          
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "📦 开发版本号: ${NEW_VERSION}"
+
+      - name: ✏️ 更新版本号
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" pyproject.toml
+          echo "✅ 版本已更新: $(grep '^version =' pyproject.toml)"
+
+      - name: 🏗️ 构建项目
+        run: uv build
+
+      - name: 🚀 发布到 TestPyPI
+        run: |
+          uv publish \
+            --publish-url https://test.pypi.org/legacy/ \
+            --check-url https://test.pypi.org/simple/ \
+            dist/*
