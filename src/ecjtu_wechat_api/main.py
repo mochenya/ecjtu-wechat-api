@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from ecjtu_wechat_api import courses_router, exams_router, scores_router, __version__
+from ecjtu_wechat_api import __version__, courses_router, exams_router, scores_router
 from ecjtu_wechat_api.core.exceptions import ECJTUAPIError
 from ecjtu_wechat_api.utils.logger import logger
 
