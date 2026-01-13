@@ -12,13 +12,13 @@ class ScoreItem(BaseModel):
     """单门课程成绩的结构化信息。"""
 
     course_name: str = Field(..., description="课程名称")
-    course_code: str | None = Field(None, description="课程代码")
+    course_code: str = Field(..., description="课程代码")
     final_score: str = Field(..., description="期末成绩")
     reexam_score: str | None = Field(None, description="重考成绩")
     retake_score: str | None = Field(None, description="重修成绩")
     course_type: str = Field(..., description="课程性质，如 '必修课'")
     credit: float = Field(..., description="学分")
-    major: str | None = Field(None, description="专业标识，如 '主修'")
+    major: str = Field(..., description="专业标识，如 '主修'")
 
 
 class StudentScoreInfo(BaseModel):
