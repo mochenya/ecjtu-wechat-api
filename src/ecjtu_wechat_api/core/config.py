@@ -42,9 +42,10 @@ class Config:
     }
 
     # 教务系统相关接口地址
-    SCORE_URL = "https://jwxt.ecjtu.edu.cn/weixin/ScoreQuery"
-    COURSE_URL = "https://jwxt.ecjtu.edu.cn/weixin/CalendarServlet"
-    EXAM_URL = "https://jwxt.ecjtu.edu.cn/weixin/ExamArrangeCl"
+    BASE_URL = "https://jwxt.ecjtu.edu.cn/weixin"
+    SCORE_URL = f"{BASE_URL}/ScoreQuery"
+    COURSE_URL = f"{BASE_URL}/CalendarServlet"
+    EXAM_URL = f"{BASE_URL}/ExamArrangeCl"
 
 
 # 全局单例配置对象

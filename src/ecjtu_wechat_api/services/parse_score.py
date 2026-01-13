@@ -55,7 +55,13 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
 
         # 1. 提取学生姓名和当前查询学期
         # 原始片段:
-        # <div class="right">姓名:<span>张三</span><br />学期:<span>2025.1</span></div>
+        # <div class="right">
+        #     姓名:
+        #     <span>张三</span>
+        #     <br />
+        #     当前学期:
+        #     <span>2025.1</span>
+        # </div>
         right_div = soup.find("div", class_="right")
         student_name = ""
         current_term = ""
@@ -66,7 +72,15 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
                 current_term = spans[1].get_text(strip=True)
 
         # 2. 提取下拉菜单中的可选学期列表
-        # 原始片段: <li><a href="/ScoreQuery?term=2025.2">2025.2</a></li>
+        # 原始片段:
+        # <ul class="dropdown-menu dropdown-menu-left btn-block" role="menu"
+        # 	aria-labelledby="dropwownmenu1">
+        #         <li>
+        #             <a
+        #                 href="/weixin/ScoreQuery?weiXinID=xxx&term=2025.1"
+        #                 role="menuitem">2025.1</a>
+        #         </li>
+        # </ul>
         available_terms = []
         term_ul = soup.find("ul", class_="dropdown-menu")
         if term_ul:
@@ -78,7 +92,11 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
                     )
 
         # 3. 提取成绩汇总数量
-        # 原始片段: <div class="words">共有<strong>3</strong>门考试成绩。</div>
+        # 原始片段:
+        # <div class="words">
+        # 	您好！本学期当前你共有
+        # 	<strong>13</strong>门考试成绩。
+        # </div>
         score_count = 0
         words_div = soup.find("div", class_="words")
         if words_div and (strong := words_div.find("strong")):
@@ -87,10 +105,31 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
 
         # 4. 遍历并提取具体课程成绩 (<div class="row">)
         # 原始片段:
-        # <div class="row"><div class="text">
-        #     <span class="course">【主修】【1500190200】军事技能(学分:1.0)</span>
-        #     <div class="grade">期末成绩:<span class="score">合格</span>...</div>
-        # </div></div>
+        # <div class="row ">
+        # 	<div class="col-xs-12">
+        # 		<div class="text">
+        # 			<span class="course">【主修】【1500190200】军事技能(学分:1.0)</span>
+        # 			<div class="grade">
+        # 				期末成绩:
+        # 				<span class="score">合格</span>
+        # 				<br />
+        # 				重考成绩:
+        # 				<span class="score"></span>
+        # 				<br />
+        # 				重修成绩:
+        # 				<span class="score"></span>
+        # 				<br />
+        # 				<span class="flag">主修</span>
+        # 			</div>
+        # 		</div>
+        # 		<div class="img">
+        # 			<img src="/weixin/imgs/myschedule/dian.png;jsessionid=xxx">
+        # 		</div>
+        # 		<div class="type">
+        # 			<span class="require"><mark>必修课</mark> </span>
+        # 		</div>
+        # 	</div>
+        # </div>
         scores = []
         for row in soup.find_all("div", class_="row"):
             text_div = row.find("div", class_="text")
@@ -119,7 +158,19 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
             course_name = name_match.group(3).strip() if name_match else raw_course_text
 
             # 4.2 提取各项具体成绩
-            # 原始片段: 期末成绩:<span class="score">85</span>...
+            # 原始片段:
+            # 			<div class="grade">
+            # 				期末成绩:
+            # 				<span class="score">合格</span>
+            # 				<br />
+            # 				重考成绩:
+            # 				<span class="score"></span>
+            # 				<br />
+            # 				重修成绩:
+            # 				<span class="score"></span>
+            # 				<br />
+            # 				<span class="flag">主修</span>
+            # 			</div>
             grade_div = text_div.find("div", class_="grade")
             final_score = ""
             reexam_score = None

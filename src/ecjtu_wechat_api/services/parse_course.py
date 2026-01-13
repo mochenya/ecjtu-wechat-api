@@ -52,7 +52,12 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
         soup = BeautifulSoup(html_content, "html.parser")
 
         # 1. 提取日期和周次信息
-        # 原始片段: <div class="center"><p>2026-01-05 星期一（第19周）</p></div>
+        # 原始片段:
+		# <div class="center">
+		# 	<p>
+		# 		2026-01-05 星期一（第19周）
+		# 	</p>
+		# </div>
         date_div = soup.find("div", class_="center")
         date_info = {"date": None, "day_of_week": None, "week_info": None}
 
@@ -73,15 +78,40 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
                 else:
                     date_info["day_of_week"] = rest.strip()
 
-        # 2. 遍历课程列表容器 (<div class="calendar"><ul class="rl_info">)
-        # 原始 HTML 片段示例:
-        # <li><p>
-        #     <span class="class_span">3-4节<br /> </span>
-        #     大学英语Ⅰ(考试)<br />
-        #     时间：19 3,4<br />
-        #     地点：进贤2-212<br />
-        #     教师：<br />
-        # </p></li>
+        # 2. 遍历课程列表容器
+        # 原始片段:
+		# <div class="top">
+		# 	<div class="calendar">
+		# 		<ul class="rl_info">
+		# 				<li>
+		# 					<p>
+		# 						<span class="class_span">1-2节<br /> </span>
+		# 						C语言程序设计(上课)
+		# 						<br />
+		# 						时间：4-17 1,2
+		# 						<br />
+		# 						地点：进贤1-201
+		# 						<br />
+		# 						教师：张三
+		# 						<br />
+		# 					</p>
+		# 				</li>
+		# 				<li>
+		# 					<p>
+		# 						<span class="class_span">3-4节<br /> </span>
+		# 						软件技术基础(实验)
+		# 						<br />
+		# 						时间：15 3,4
+		# 						<br />
+		# 						地点：机房402(进贤综合楼-402)
+		# 						<br />
+		# 						教师：李四
+		# 						<br />
+		# 					</p>
+		# 				</li>
+		# 		</ul>
+		# 	</div>
+		# </div>
         courses = []
         calendar_div = soup.find("div", class_="calendar")
         if calendar_div and (ul_list := calendar_div.find("ul", class_="rl_info")):
