@@ -1,6 +1,6 @@
 [project]
 name = "ecjtu-wechat-api"
-version = "1.1.0"
+dynamic = ["version"]
 description = "华东交通大学教务系统微信版 API"
 authors = [
     { name = "mochenya" },
@@ -20,20 +20,70 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/mochenya/ecjtu-wechat-api"
+Issues = "https://github.com/mochenya/ecjtu-wechat-api/issues"
+
 [dependency-groups]
 dev = [
     "ruff>=0.1.0",
     "pytest>=7.4.0",
-    "twine>=6.2.0",
+    "hatch>=1.9.0",
+    "hatch-vcs>=0.3.0",
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+# 版本管理配置
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "1.1.0"
+tag-pattern = "^v(?P<version>.*)$"
+
+[tool.hatch.version.raw-options]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+
+# 构建配置
 [tool.hatch.build.targets.wheel]
 packages = ["src/ecjtu_wechat_api"]
 
-[project.urls]
-Homepage = "https://github.com/mochenya/ecjtu-wechat-api"
-Issues = "https://github.com/mochenya/ecjtu-wechat-api/issues"
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/ecjtu_wechat_api/_version.py"
+
+# 发布仓库配置
+[tool.hatch.publish]
+index = "main"
+
+[tool.hatch.index.main]
+url = "https://upload.pypi.org/legacy/"
+
+[tool.hatch.index.test]
+url = "https://test.pypi.org/legacy/"
+
+# 环境管理
+[tool.hatch.envs.default]
+python = "3.12"
+dependencies = [
+    "ruff>=0.1.0",
+    "pytest>=7.4.0",
+]
+
+[tool.hatch.envs.default.scripts]
+check = "ruff check src"
+format = "ruff format src"
+test = "pytest {args:tests}"
+lint = ["check", "format"]
+build = "uv build"
+full-check = ["lint", "test"]

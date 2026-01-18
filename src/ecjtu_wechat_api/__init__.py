@@ -1,9 +1,14 @@
-import tomllib
-from pathlib import Path
+# 版本读取：优先使用 hatch-vcs 生成的版本文件
+try:
+    from ._version import __version__
+except ImportError:
+    # 降级到读取 pyproject.toml
+    import tomllib
+    from pathlib import Path
 
-_pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
-with _pyproject.open("rb") as f:
-    __version__ = tomllib.load(f)["project"]["version"]
+    _pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
+    with _pyproject.open("rb") as f:
+        __version__ = tomllib.load(f)["project"]["version"]
 
 __author__ = "mochenyaa"
 __copyright__ = "Copyright (c) 2026 mochenyaa"
