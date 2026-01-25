@@ -7,11 +7,13 @@ from ecjtu_wechat_api.services.parse_exam import (
     parse_exam_schedule,
 )
 from ecjtu_wechat_api.services.parse_score import (
+    fetch_available_terms_with_scores,
     fetch_score_info,
     parse_score_info,
 )
 
 __all__ = [
+    "fetch_available_terms_with_scores",
     "fetch_course_schedule",
     "parse_course_schedule",
     "fetch_score_info",
