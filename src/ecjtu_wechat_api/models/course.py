@@ -7,6 +7,7 @@ class DateInfo(BaseModel):
     """
 
     date: str = Field(..., description="查询的目标日期，格式为 YYYY-MM-DD")
+    timestamp: int = Field(..., description="日期对应的 Unix 时间戳（秒级）")
     day_of_week: str = Field(..., description="该日期对应的星期几（如：星期一）")
     week_info: str = Field(..., description="教学周次（如：第17周）")
 

@@ -24,7 +24,12 @@ def test_get_daily_courses_with_date(mock_parse, mock_fetch):
     # Mock 成功的抓取和解析
     mock_fetch.return_value = "<html>Mocked HTML</html>"
     mock_parse.return_value = {
-        "date_info": {"date": "2026-01-06", "day_of_week": "星期二", "week_info": "19"},
+        "date_info": {
+            "date": "2026-01-06",
+            "timestamp": 1736121600,
+            "day_of_week": "星期二",
+            "week_info": "19",
+        },
         "courses": [
             {
                 "name": "大学英语",
@@ -61,7 +66,12 @@ def test_get_daily_courses_without_date(mock_date, mock_parse, mock_fetch):
 
     mock_fetch.return_value = "<html>Mocked HTML</html>"
     mock_parse.return_value = {
-        "date_info": {"date": "2026-01-06", "day_of_week": "星期二", "week_info": "19"},
+        "date_info": {
+            "date": "2026-01-06",
+            "timestamp": 1736121600,
+            "day_of_week": "星期二",
+            "week_info": "19",
+        },
         "courses": [
             {
                 "name": "大学英语",

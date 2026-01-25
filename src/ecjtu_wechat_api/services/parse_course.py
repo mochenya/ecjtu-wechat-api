@@ -4,6 +4,7 @@
 
 import json
 import re
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 
@@ -67,6 +68,12 @@ def parse_course_schedule(html_content: str) -> CourseSchedule:
             parts = raw_date_str.split(" ", 1)
             if len(parts) >= 1:
                 date_info["date"] = parts[0]
+                # 将日期字符串转换为 Unix 时间戳（秒级）
+                try:
+                    dt = datetime.strptime(date_info["date"], "%Y-%m-%d")
+                    date_info["timestamp"] = int(dt.timestamp())
+                except ValueError:
+                    date_info["timestamp"] = 0
 
             if len(parts) >= 2:
                 rest = parts[1]
