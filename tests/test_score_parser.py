@@ -6,7 +6,10 @@ import pytest
 
 from ecjtu_wechat_api.core.exceptions import ParseError
 from ecjtu_wechat_api.models.score import StudentScoreInfo
-from ecjtu_wechat_api.services.parse_score import parse_score_info
+from ecjtu_wechat_api.services.parse_score import (
+    fetch_available_terms_with_scores,
+    parse_score_info,
+)
 
 # 正常场景：完整 HTML 样本
 SAMPLE_HTML_COMPLETE = """
@@ -373,3 +376,127 @@ def test_parse_score_info_none_html():
     """测试 None 输入抛出 ParseError"""
     with pytest.raises(ParseError, match="HTML 内容为空"):
         parse_score_info(None)
+
+
+# fetch_available_terms_with_scores 相关测试
+
+
+# 包含三个学期选项的 HTML（用于测试过滤）
+SAMPLE_HTML_THREE_TERMS = """
+<!DOCTYPE html>
+<html>
+    <body>
+        <div class="right">
+            姓名:
+            <span>张三</span>
+            <br />
+            当前学期:
+            <span>2025.1</span>
+        </div>
+        <ul class="dropdown-menu dropdown-menu-left btn-block" role="menu">
+            <li>
+                <a href="/weixin/ScoreQuery?weiXinID=xxx&amp;term=2025.1"
+                   role="menuitem">2025.1</a>
+            </li>
+            <li>
+                <a href="/weixin/ScoreQuery?weiXinID=xxx&amp;term=2024.2"
+                   role="menuitem">2024.2</a>
+            </li>
+            <li>
+                <a href="/weixin/ScoreQuery?weiXinID=xxx&amp;term=2024.1"
+                   role="menuitem">2024.1</a>
+            </li>
+        </ul>
+        <div class="words">
+            您好！本学期当前你共有
+            <strong>1</strong>门考试成绩。
+        </div>
+        <div class="row ">
+            <div class="col-xs-12">
+                <div class="text">
+                    <span class="course">【主修】【1500190200】军事技能(学分:1.0)</span>
+                    <div class="grade">
+                        期末成绩:
+                        <span class="score">合格</span>
+                    </div>
+                </div>
+                <div class="type">
+                    <span class="require"><mark>必修课</mark> </span>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+"""
+
+
+@pytest.mark.asyncio
+async def test_fetch_available_terms_with_scores_mixed(monkeypatch):
+    """测试混合场景：部分学期有成绩，部分无成绩"""
+
+    async def mock_fetch_score_info(weiXinID: str, term: str | None = None):
+        # 第一次调用：不带 term，返回包含3个学期的 HTML
+        if term is None:
+            return SAMPLE_HTML_THREE_TERMS
+        # 后续调用：根据 term 返回不同结果
+        if term == "2025.1":
+            return SAMPLE_HTML_COMPLETE  # 有成绩（2门）
+        if term == "2024.2":
+            return SAMPLE_HTML_EMPTY_SCORES  # 无成绩
+        if term == "2024.1":
+            return SAMPLE_HTML_WITH_REEXAM  # 有成绩（1门）
+        return SAMPLE_HTML_EMPTY_SCORES
+
+    # Mock fetch_score_info
+    import ecjtu_wechat_api.services.parse_score as score_module
+
+    monkeypatch.setattr(score_module, "fetch_score_info", mock_fetch_score_info)
+
+    result = await fetch_available_terms_with_scores("test_weixin_id")
+
+    # 应该只返回有成绩的学期（2025.1 和 2024.1）
+    assert len(result) == 2
+    assert "2025.1" in result
+    assert "2024.1" in result
+    assert "2024.2" not in result
+
+
+@pytest.mark.asyncio
+async def test_fetch_available_terms_with_scores_all_empty(monkeypatch):
+    """测试所有学期都无成绩的边界情况"""
+
+    async def mock_fetch_score_info(weiXinID: str, term: str | None = None):
+        # 第一次调用：返回包含学期的 HTML
+        if term is None:
+            return SAMPLE_HTML_COMPLETE
+        # 所有学期都无成绩
+        return SAMPLE_HTML_EMPTY_SCORES
+
+    import ecjtu_wechat_api.services.parse_score as score_module
+
+    monkeypatch.setattr(score_module, "fetch_score_info", mock_fetch_score_info)
+
+    result = await fetch_available_terms_with_scores("test_weixin_id")
+
+    # 应该返回空列表
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_available_terms_with_scores_all_valid(monkeypatch):
+    """测试所有学期都有成绩的场景"""
+
+    async def mock_fetch_score_info(weiXinID: str, term: str | None = None):
+        if term is None:
+            return SAMPLE_HTML_COMPLETE
+        # 所有学期都有成绩
+        return SAMPLE_HTML_WITH_REEXAM
+
+    import ecjtu_wechat_api.services.parse_score as score_module
+
+    monkeypatch.setattr(score_module, "fetch_score_info", mock_fetch_score_info)
+
+    result = await fetch_available_terms_with_scores("test_weixin_id")
+
+    # 应该返回所有学期
+    assert len(result) == 2

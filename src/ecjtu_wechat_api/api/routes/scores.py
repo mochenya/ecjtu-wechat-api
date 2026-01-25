@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query
 
 from ecjtu_wechat_api.models.score import StudentScoreInfo
 from ecjtu_wechat_api.services.parse_score import (
+    fetch_available_terms_with_scores,
     fetch_score_info,
     parse_score_info,
 )
@@ -40,3 +41,28 @@ async def get_score_info(
     parsed_data = parse_score_info(html_content)
 
     return parsed_data
+
+
+@router.get(
+    "/terms/valid",
+    response_model=list[str],
+    summary="获取有效学期列表",
+    description=(
+        "获取真正包含成绩数据的学期名称列表。"
+        "系统会检查每个学期是否包含成绩数据，并过滤掉无成绩的学期。"
+    ),
+)
+async def get_valid_terms(
+    weiXinID: str = Query(
+        ...,
+        description="教务系统绑定的微信用户ID，通过访问微信教务公众号获取。",
+    ),
+) -> list[str]:
+    """
+    具体的学期获取逻辑：
+    1. 先不带 term 获取当前学期 HTML，解析出可用学期列表
+    2. 依次遍历每个学期，获取成绩数据
+    3. 过滤掉无成绩的学期
+    4. 返回包含成绩的学期名称列表
+    """
+    return await fetch_available_terms_with_scores(weiXinID)

@@ -218,6 +218,49 @@ def parse_score_info(html_content: str) -> StudentScoreInfo:
         raise ParseError(f"成绩解析失败: {str(e)}") from e
 
 
+async def fetch_available_terms_with_scores(weiXinID: str) -> list[str]:
+    """
+    获取真正有成绩的学期名称列表。
+
+    流程:
+    1. 先不带 term 获取当前学期 HTML
+    2. 解析出 available_terms 列表
+    3. 依次遍历每个 term，获取该学期的成绩 HTML
+    4. 解析后如果 scores 为空列表，则过滤掉该 term
+    5. 返回只包含有成绩学期的名称列表
+
+    Args:
+        weiXinID: 微信用户的唯一标识符。
+
+    Returns:
+        list[str]: 包含成绩数据的学期名称列表，如 ["2025.1", "2024.2"]。
+
+    Raises:
+        EducationSystemError: 请求失败时抛出。
+        ParseError: 解析失败时抛出。
+    """
+    # 1. 先不带 term 获取当前学期 HTML
+    html = await fetch_score_info(weiXinID, term=None)
+    info = parse_score_info(html)
+
+    # 2. 过滤出真正有成绩的学期
+    valid_terms = []
+    for term_item in info.available_terms:
+        term_name = term_item.name  # 如 "2025.1"
+        term_html = await fetch_score_info(weiXinID, term=term_name)
+        term_info = parse_score_info(term_html)
+
+        # 3. 只保留有成绩的学期
+        if term_info.scores:
+            valid_terms.append(term_name)
+            logger.info(f"学期 {term_name} 包含 {len(term_info.scores)} 门成绩")
+        else:
+            logger.info(f"学期 {term_name} 无成绩，已过滤")
+
+    logger.info(f"共找到 {len(valid_terms)} 个有成绩的学期: {valid_terms}")
+    return valid_terms
+
+
 if __name__ == "__main__":
     import asyncio
 
@@ -225,17 +268,34 @@ if __name__ == "__main__":
         # 本地调试运行逻辑
         logger.info("正在从教务系统抓取成绩...")
         try:
-            html_content = await fetch_score_info(settings.WEIXIN_ID)
-            parsed_data = parse_score_info(html_content)
-            # 保存到本地归档
-            save_debug_data(
-                "scores",
-                f"{parsed_data.student_name}_{parsed_data.current_term}",
-                html_content,
-                parsed_data,
-            )
-            logger.info("解析成功，结果已保存。")
-            print(json.dumps(parsed_data.model_dump(), indent=4, ensure_ascii=False))
+            # 1. 获取有效学期列表
+            valid_terms = await fetch_available_terms_with_scores(settings.WEIXIN_ID)
+            logger.info(f"共找到 {len(valid_terms)} 个有效学期: {valid_terms}")
+
+            # 2. 解析并保存所有有效学期的成绩
+            for term_name in valid_terms:
+                html_content = await fetch_score_info(
+                    settings.WEIXIN_ID, term=term_name
+                )
+                parsed_data = parse_score_info(html_content)
+                # 保存到本地归档
+                save_debug_data(
+                    "scores",
+                    f"{parsed_data.student_name}_{term_name}",
+                    html_content,
+                    parsed_data,
+                )
+                score_count = len(parsed_data.scores)
+                logger.info(f"学期 {term_name} 成绩已保存，共 {score_count} 门")
+                # 打印 JSON
+                print(
+                    json.dumps(
+                        parsed_data.model_dump(), indent=4, ensure_ascii=False
+                    )
+                )
+
+            logger.info("所有有效学期成绩已保存完成。")
+            print(json.dumps(valid_terms, indent=4, ensure_ascii=False))
         except Exception as e:
             logger.error(f"运行失败: {e}")
 
