@@ -2,6 +2,7 @@
 华东交通大学教务系统成绩查询解析服务
 """
 
+import asyncio
 import json
 import re
 from contextlib import suppress
@@ -225,7 +226,7 @@ async def fetch_available_terms_with_scores(weiXinID: str) -> list[str]:
     流程:
     1. 先不带 term 获取当前学期 HTML
     2. 解析出 available_terms 列表
-    3. 依次遍历每个 term，获取该学期的成绩 HTML
+    3. 并发请求所有学期的成绩 HTML
     4. 解析后如果 scores 为空列表，则过滤掉该 term
     5. 返回只包含有成绩学期的名称列表
 
@@ -243,14 +244,25 @@ async def fetch_available_terms_with_scores(weiXinID: str) -> list[str]:
     html = await fetch_score_info(weiXinID, term=None)
     info = parse_score_info(html)
 
-    # 2. 过滤出真正有成绩的学期
+    if not info.available_terms:
+        logger.info("无可选学期")
+        return []
+
+    # 2. 并发请求所有学期（性能优化）
+    logger.info(f"开始并发请求 {len(info.available_terms)} 个学期的成绩...")
+    tasks = [
+        fetch_score_info(weiXinID, term=term_item.name)
+        for term_item in info.available_terms
+    ]
+    all_htmls = await asyncio.gather(*tasks)
+
+    # 3. 解析并过滤出真正有成绩的学期
     valid_terms = []
-    for term_item in info.available_terms:
-        term_name = term_item.name  # 如 "2025.1"
-        term_html = await fetch_score_info(weiXinID, term=term_name)
+    for term_item, term_html in zip(info.available_terms, all_htmls):
+        term_name = term_item.name
         term_info = parse_score_info(term_html)
 
-        # 3. 只保留有成绩的学期
+        # 只保留有成绩的学期
         if term_info.scores:
             valid_terms.append(term_name)
             logger.info(f"学期 {term_name} 包含 {len(term_info.scores)} 门成绩")
@@ -262,8 +274,6 @@ async def fetch_available_terms_with_scores(weiXinID: str) -> list[str]:
 
 
 if __name__ == "__main__":
-    import asyncio
-
     async def main():
         # 本地调试运行逻辑
         logger.info("正在从教务系统抓取成绩...")

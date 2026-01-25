@@ -10,6 +10,9 @@ client = TestClient(app)
 
 
 # 异常处理测试
+
+
+# 异常处理测试
 def test_api_error_handler():
     """测试 EducationSystemError 的异常处理器"""
     response = client.get("/")

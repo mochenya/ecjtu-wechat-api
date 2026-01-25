@@ -2,6 +2,7 @@
 课程服务补充测试模块
 """
 
+import asyncio
 import pytest
 
 from ecjtu_wechat_api.core.exceptions import EducationSystemError, ParseError
@@ -98,6 +99,16 @@ SAMPLE_HTML_NO_COURSES = """
 """
 
 
+@pytest.fixture(autouse=True)
+def reset_http_client():
+    """每个测试前后重置 HTTP 客户端"""
+    from ecjtu_wechat_api.utils.http import close_http_client
+
+    asyncio.run(close_http_client())
+    yield
+    asyncio.run(close_http_client())
+
+
 # fetch 函数测试
 @pytest.mark.asyncio
 async def test_fetch_course_schedule_success(mocker):
@@ -107,16 +118,19 @@ async def test_fetch_course_schedule_success(mocker):
     mock_response.text = SAMPLE_HTML_COURSE
     mock_response.encoding = "utf-8"
 
-    mock_client = mocker.AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.get = mocker.AsyncMock(return_value=mock_response)
+    mock_client_instance = mocker.AsyncMock()
+    mock_client_instance.get = mocker.AsyncMock(return_value=mock_response)
+    mock_client_instance.aclose = mocker.AsyncMock()
 
-    mocker.patch("httpx.AsyncClient", return_value=mock_client)
+    mocker.patch(
+        "ecjtu_wechat_api.utils.http.get_http_client",
+        return_value=mock_client_instance,
+    )
 
     result = await fetch_course_schedule("test_id", "2026-01-05")
 
     assert "2026-01-05" in result
-    mock_client.get.assert_called_once()
+    mock_client_instance.get.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -124,11 +138,16 @@ async def test_fetch_course_schedule_network_error(mocker):
     """测试网络错误"""
     import httpx
 
-    mock_client = mocker.AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.get = mocker.AsyncMock(side_effect=httpx.RequestError("Network error"))
+    mock_client_instance = mocker.AsyncMock()
+    mock_client_instance.get = mocker.AsyncMock(
+        side_effect=httpx.RequestError("Network error")
+    )
+    mock_client_instance.aclose = mocker.AsyncMock()
 
-    mocker.patch("httpx.AsyncClient", return_value=mock_client)
+    mocker.patch(
+        "ecjtu_wechat_api.utils.http.get_http_client",
+        return_value=mock_client_instance,
+    )
 
     with pytest.raises(EducationSystemError, match="网络请求失败"):
         await fetch_course_schedule("test_id", "2026-01-05")

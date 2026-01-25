@@ -47,6 +47,14 @@ app.include_router(scores_router)
 app.include_router(exams_router)
 
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    """应用关闭时清理资源"""
+    from ecjtu_wechat_api.utils.http import close_http_client
+
+    await close_http_client()
+
+
 @app.get(
     "/", summary="根路径检查", description="显示 API 的基本状态信息及使用方法指导。"
 )

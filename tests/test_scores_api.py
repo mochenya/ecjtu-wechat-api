@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
@@ -6,6 +7,16 @@ from ecjtu_wechat_api.core.exceptions import EducationSystemError, ParseError
 from ecjtu_wechat_api.main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """每个测试前后清空缓存"""
+    from ecjtu_wechat_api.utils.cache import clear_cache
+
+    clear_cache()
+    yield
+    clear_cache()
 
 
 @patch("ecjtu_wechat_api.api.routes.scores.fetch_score_info", new_callable=AsyncMock)

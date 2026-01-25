@@ -6,6 +6,7 @@ from ecjtu_wechat_api.services.parse_score import (
     fetch_score_info,
     parse_score_info,
 )
+from ecjtu_wechat_api.utils.cache import generate_cache_key, get_cached, set_cached
 
 router = APIRouter(prefix="/scores", tags=["scores"])
 
@@ -30,15 +31,25 @@ async def get_score_info(
 ):
     """
     具体的成绩获取逻辑：
-    1. 调用解析服务，模拟移动端环境从教务系统抓取原始 HTML。
-    2. 解析 HTML 并映射到 StudentScoreInfo 结构化模型。
-    3. 返回 JSON 格式的解析结果。
+    1. 尝试从缓存获取数据（1小时缓存）。
+    2. 如缓存未命中，调用解析服务模拟移动端环境从教务系统抓取原始 HTML。
+    3. 解析 HTML 并映射到 StudentScoreInfo 结构化模型。
+    4. 将结果存入缓存并返回 JSON 格式的解析结果。
     """
+    # 尝试从缓存获取（1小时缓存）
+    cache_key = generate_cache_key(weiXinID, term=term or "", endpoint="scores_info")
+    cached_data = get_cached(cache_key)
+    if cached_data is not None:
+        return cached_data
+
     # 获取原始 HTML
     html_content = await fetch_score_info(weiXinID, term)
 
     # 解析并构造 Pydantic 模型
     parsed_data = parse_score_info(html_content)
+
+    # 存入缓存（1小时 = 3600秒）
+    set_cached(cache_key, parsed_data, ttl=3600)
 
     return parsed_data
 
@@ -60,9 +71,21 @@ async def get_valid_terms(
 ) -> list[str]:
     """
     具体的学期获取逻辑：
-    1. 先不带 term 获取当前学期 HTML，解析出可用学期列表
-    2. 依次遍历每个学期，获取成绩数据
-    3. 过滤掉无成绩的学期
-    4. 返回包含成绩的学期名称列表
+    1. 尝试从缓存获取数据（2小时缓存）。
+    2. 如缓存未命中，先不带 term 获取当前学期 HTML，解析出可用学期列表
+    3. 依次遍历每个学期，获取成绩数据
+    4. 过滤掉无成绩的学期
+    5. 将结果存入缓存并返回包含成绩的学期名称列表
     """
-    return await fetch_available_terms_with_scores(weiXinID)
+    # 尝试从缓存获取（2小时缓存）
+    cache_key = generate_cache_key(weiXinID, endpoint="scores_valid_terms")
+    cached_data = get_cached(cache_key)
+    if cached_data is not None:
+        return cached_data
+
+    valid_terms = await fetch_available_terms_with_scores(weiXinID)
+
+    # 存入缓存（2小时 = 7200秒）
+    set_cached(cache_key, valid_terms, ttl=7200)
+
+    return valid_terms
