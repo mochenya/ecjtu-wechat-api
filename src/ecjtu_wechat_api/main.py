@@ -1,3 +1,5 @@
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -10,6 +12,31 @@ app = FastAPI(
     description="提供华东交通大学教务系统的课程表查询、成绩获取与考试安排服务，支持结构化数据。",
     version=__version__,
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """
+    HTTP 请求日志中间件
+
+    记录每个请求的起始、完成状态和耗时，用于性能监控和问题排查。
+    """
+    start_time = time.time()
+    logger.info(f"请求开始: {request.method} {request.url.path}")
+
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        logger.info(
+            f"请求完成: {request.method} {request.url.path} | "
+            f"状态码: {response.status_code} | 耗时: {process_time:.3f}s"
+        )
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
+    except Exception as e:
+        process_time = time.time() - start_time
+        logger.error(f"请求失败: {request.method} {request.url.path} | 错误: {str(e)}")
+        raise
 
 
 @app.exception_handler(ECJTUAPIError)
@@ -53,6 +80,32 @@ async def shutdown_event():
     from ecjtu_wechat_api.utils.http import close_http_client
 
     await close_http_client()
+
+
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时验证环境变量"""
+    import os
+    from pathlib import Path
+
+    # 检查 .env 文件是否存在
+    env_file = Path(os.getcwd()) / ".env"
+    if not env_file.exists():
+        logger.warning(f".env 文件不存在: {env_file}")
+
+    # 验证关键环境变量（可选，因为某些环境变量可以为空）
+    from ecjtu_wechat_api.core.config import settings
+
+    missing_vars = []
+    if not settings.WEIXIN_ID:
+        missing_vars.append("WEIXIN_ID")
+
+    if missing_vars:
+        logger.warning(
+            f"以下环境变量未设置: {', '.join(missing_vars)}，某些功能可能无法正常工作。"
+        )
+    else:
+        logger.info("环境变量验证通过")
 
 
 @app.get(

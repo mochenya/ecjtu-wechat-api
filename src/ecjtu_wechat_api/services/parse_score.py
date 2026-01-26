@@ -274,6 +274,7 @@ async def fetch_available_terms_with_scores(weiXinID: str) -> list[str]:
 
 
 if __name__ == "__main__":
+
     async def main():
         # 本地调试运行逻辑
         logger.info("正在从教务系统抓取成绩...")
@@ -299,9 +300,7 @@ if __name__ == "__main__":
                 logger.info(f"学期 {term_name} 成绩已保存，共 {score_count} 门")
                 # 打印 JSON
                 print(
-                    json.dumps(
-                        parsed_data.model_dump(), indent=4, ensure_ascii=False
-                    )
+                    json.dumps(parsed_data.model_dump(), indent=4, ensure_ascii=False)
                 )
 
             logger.info("所有有效学期成绩已保存完成。")

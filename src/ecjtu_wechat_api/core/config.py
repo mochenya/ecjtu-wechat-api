@@ -47,6 +47,15 @@ class Config:
     COURSE_URL = f"{BASE_URL}/CalendarServlet"
     EXAM_URL = f"{BASE_URL}/ExamArrangeCl"
 
+    # 日志配置
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+    LOG_PATH: str = os.getenv("LOG_PATH", "logs")
+    LOG_ROTATION: str = os.getenv("LOG_ROTATION", "100 MB")
+    LOG_RETENTION: str = os.getenv("LOG_RETENTION", "30 days")
+    LOG_COMPRESSION: str = os.getenv("LOG_COMPRESSION", "zip")
+    LOG_COLORIZE: bool = os.getenv("LOG_COLORIZE", "true").lower() == "true"
+    LOG_SERIALIZE: bool = os.getenv("LOG_SERIALIZE", "false").lower() == "true"
+
 
 # 全局单例配置对象
 settings = Config()
